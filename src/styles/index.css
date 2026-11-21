@@ -1,0 +1,251 @@
+@import "tailwindcss";
+/* The Plus Jakarta Sans @font-face files themselves are imported from
+   src/main.jsx, not here: this panel compiles Tailwind through PostCSS, which
+   would inline fontsource's CSS without rewriting its relative ./files/*.woff2
+   URLs - importing it from JS lets Vite resolve and bundle the font files. */
+
+/* The one place the panel's typeface is defined. Tailwind's preflight applies
+   --font-sans to <html> (and form controls inherit it), and the `font-sans`
+   utility resolves to it too - so every page, input, button and chart label
+   uses Plus Jakarta Sans without any per-component font classes. */
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Entrance animations for components/common/modal (`animate-overlay-in`,
+     `animate-dialog-in`) and page content (`animate-rise-in`). */
+  --animate-overlay-in: overlay-in 200ms ease-out;
+  --animate-dialog-in: dialog-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-rise-in: rise-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-overlay-in,
+  .animate-dialog-in,
+  .animate-rise-in {
+    animation: none;
+  }
+}
+
+@layer base {
+  html {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply font-sans antialiased text-gray-800 bg-slate-50;
+  }
+}
+
+/* Sonner injects its own (unlayered) CSS with a system-font stack for toasts.
+   Unlayered rules beat anything inside @layer, so this override has to stay
+   outside a layer - `html` in front gives it the higher specificity. */
+html [data-sonner-toaster] {
+  font-family: var(--font-sans);
+}
+
+/* Toasts restyled as the panel's cards (bg-white, border-slate-100,
+   rounded-2xl, slate text) with a teal/rose/amber/sky icon per type. Same
+   unlayered + `html` specificity trick as above - these override Sonner's own
+   [data-sonner-toaster][data-sonner-theme='light'] variables. */
+html [data-sonner-toaster][data-sonner-theme="light"] {
+  --normal-bg: var(--color-white);
+  --normal-border: var(--color-slate-100);
+  --normal-text: var(--color-slate-800);
+  --border-radius: var(--radius-2xl);
+}
+
+html [data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  gap: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  box-shadow:
+    0 10px 25px -5px rgb(15 23 42 / 0.08),
+    0 4px 10px -4px rgb(15 23 42 / 0.06);
+}
+
+html [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-title] {
+  font-weight: 600;
+}
+
+html [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-description] {
+  color: var(--color-slate-500);
+}
+
+html [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-icon] {
+  width: 20px;
+  height: 20px;
+}
+
+html [data-sonner-toast][data-type="success"] [data-icon] { color: var(--color-teal-600); }
+html [data-sonner-toast][data-type="error"] [data-icon] { color: var(--color-rose-500); }
+html [data-sonner-toast][data-type="warning"] [data-icon] { color: var(--color-amber-500); }
+html [data-sonner-toast][data-type="info"] [data-icon] { color: var(--color-sky-500); }
+html [data-sonner-toast][data-type="loading"] [data-icon] { color: var(--color-teal-600); }
+
+html [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button] {
+  background: var(--color-teal-500);
+  color: var(--color-white);
+  border-radius: var(--radius-lg);
+}
+
+/* Content written in components/common/richText/RichTextEditor.jsx (Tiptap).
+   Tailwind's preflight strips headings, lists and quotes of their looks, so
+   the article's typography is given back here, in the panel's slate/teal. */
+@layer components {
+  .rich-text {
+    @apply text-[15px] leading-7 text-slate-700 wrap-break-word;
+  }
+  .rich-text > * + * {
+    @apply mt-4;
+  }
+  .rich-text h2 {
+    @apply mt-7 text-xl font-bold leading-snug text-slate-800;
+  }
+  .rich-text h3 {
+    @apply mt-6 text-lg font-semibold leading-snug text-slate-800;
+  }
+  .rich-text > :first-child {
+    @apply mt-0;
+  }
+  .rich-text ul {
+    @apply list-disc pl-6;
+  }
+  .rich-text ol {
+    @apply list-decimal pl-6;
+  }
+  .rich-text li + li,
+  .rich-text li > ul,
+  .rich-text li > ol {
+    @apply mt-1.5;
+  }
+  .rich-text li::marker {
+    @apply text-teal-500;
+  }
+  .rich-text blockquote {
+    @apply border-l-4 border-teal-400 bg-teal-50/50 py-2 pl-4 pr-3 italic text-slate-600 rounded-r-lg;
+  }
+  .rich-text a {
+    @apply font-medium text-teal-600 underline underline-offset-2 cursor-pointer;
+  }
+  .rich-text hr {
+    @apply my-6 border-slate-200;
+  }
+  .rich-text strong {
+    @apply font-bold text-slate-800;
+  }
+  /* Tiptap's Placeholder extension puts the text in data-placeholder. */
+  .rich-text p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply pointer-events-none float-left h-0 text-slate-400;
+  }
+}
+
+@layer components {
+  /* Add common custom components here if needed */
+  .btn-primary {
+    @apply px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm;
+  }
+  .input-field {
+    /* Same teal focus ring as the Topbar search input. */
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none transition-all;
+  }
+
+  /* PhoneField (react-phone-number-input): flag + arrow on the left, a thin
+     divider, then the number - same height as .input-field. */
+  .phone-field {
+    --PhoneInputCountryFlag-height: 1rem;
+    --PhoneInputCountryFlag-borderColor: transparent;
+    --PhoneInputCountrySelect-marginRight: 0.75rem;
+    --PhoneInputCountrySelectArrow-color: var(--color-slate-400);
+    --PhoneInputCountrySelectArrow-opacity: 1;
+    --PhoneInputCountrySelectArrow-color--focus: var(--color-teal-600);
+    --PhoneInputCountryFlag-borderColor--focus: transparent;
+  }
+  .phone-field .PhoneInputCountry {
+    @apply pr-3 border-r border-slate-200;
+  }
+  .phone-field .PhoneInputCountryIcon {
+    @apply overflow-hidden rounded-sm;
+  }
+}
+
+/* ==========================================================================
+   Print Stylesheet - Clean, Corporate & Multi-Page Ready
+   ========================================================================== */
+@media print {
+  @page {
+    size: auto;
+    margin: 12mm 10mm;
+  }
+
+  html,
+  body {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app layout navigation chrome and non-print interactive tools */
+  aside,
+  header,
+  nav,
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Release viewport and scroll locks so multi-page documents print fully */
+  .h-screen,
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-x-hidden {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  /* Avoid awkward page breaks splitting cards or table rows */
+  section,
+  table,
+  tr,
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Clean up heavy shadows for sharp paper / PDF prints */
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none !important;
+  }
+}
